@@ -32,7 +32,7 @@
 #define VERTEX_BUFFER_BIND_ID 0
 
 static const std::vector<const char*> s_validationLayers = {
-    "VK_LAYER_LUNARG_standard_validation"
+    "VK_LAYER_KHRONOS_validation"
 };
 
 static const std::vector<const char*> s_deviceExtensions = {
@@ -2078,7 +2078,7 @@ void as_vulkan_create_instance(AsVulkan* asVulkan)
     std::cout << "available extensions: \n";
     for (const auto& extension : extensions)
     {
-        std::cout << "\t" << extension.extensionName;
+        std::cout << extension.extensionName << '\n';
     }
 
     VkApplicationInfo appInfo{};
@@ -2092,6 +2092,11 @@ void as_vulkan_create_instance(AsVulkan* asVulkan)
     std::vector<const char*> enabledExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
 #ifdef _WIN32
     enabledExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#endif
+
+// fix for SDL
+#ifdef __APPLE__
+    enabledExtensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #endif
 
 #ifdef _DEBUG

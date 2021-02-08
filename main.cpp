@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
   as_vulkan_create(&app.asVulkan);
   as_vulkan_create_instance(app.asVulkan);
 #ifndef NDEBUG
-  as_vulkan_debug(app.asVulkan);
+  // as_vulkan_debug(app.asVulkan); // update me
 #endif // _DEBUG
   as_vulkan_create_surface(app.asVulkan, window);
   as_vulkan_pick_physical_device(app.asVulkan);
