@@ -1,0 +1,4 @@
+/third-party/stb/
+/third-party/tinyobjloader/
+build/
+.vscode/
