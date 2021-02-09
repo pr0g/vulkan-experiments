@@ -270,15 +270,13 @@ int main(int argc, char** argv) {
   using fp_seconds =
     std::chrono::duration<float, std::chrono::seconds::period>;
 
-  auto previousTime = std::chrono::high_resolution_clock::now();
-
   float spawnDelay = 0.03f;
   float timer = spawnDelay;
 
   asci::SmoothProps smooth_props{};
   asc::Camera camera{};
   // initial camera position and orientation
-  camera.look_at = as::vec3(0.0f, 0.0f, 15.0f);
+  camera.look_at = as::vec3(0.0f, 0.0f, 20.0f);
 
   asc::Camera target_camera = camera;
 
@@ -298,6 +296,7 @@ int main(int argc, char** argv) {
   asci::CameraSystem camera_system;
   camera_system.cameras_ = cameras;
 
+  auto previousTime = std::chrono::high_resolution_clock::now();
   for (bool quit = false; !quit;) {
     auto currentTime = std::chrono::high_resolution_clock::now();
     auto deltaTime = fp_seconds(currentTime - previousTime);
@@ -319,55 +318,59 @@ int main(int argc, char** argv) {
     timer += deltaTime.count();
     if (timer >= spawnDelay)
     {
-        static size_t meshIndex = 0;
+      static size_t meshIndex = 0;
 
-        size_t meshInstanceHandle;
-        size_t meshInstanceIndex;
-        // actually allocate the mesh/uniform buffer
-        if (g_meshCount[meshIndex] < g_fruitCount)
+      size_t meshInstanceHandle;
+      size_t meshInstanceIndex;
+      // actually allocate the mesh/uniform buffer
+      if (g_meshCount[meshIndex] < g_fruitCount)
+      {
+        meshInstanceHandle = as_vulkan_allocate_mesh_instance(app.asVulkan);
+        meshInstanceIndex = as_uniform_add_mesh_instance(as_vulkan_uniform(
+          app.asVulkan, g_uniformHandles[meshIndex]), meshInstanceHandle);
+
+        g_meshInstanceHandle[meshIndex][g_meshCount[meshIndex]] = meshInstanceHandle;
+        g_meshInstanceIndex[meshIndex][g_meshCount[meshIndex]] = meshInstanceIndex;
+
+        g_meshCount[meshIndex]++;
+      }
+      else
+      {
+        // if we've run out, reuse an existing one
+        if (g_meshCounter[meshIndex] == g_fruitCount)
         {
-          meshInstanceHandle = as_vulkan_allocate_mesh_instance(app.asVulkan);
-          meshInstanceIndex = as_uniform_add_mesh_instance(as_vulkan_uniform(app.asVulkan, g_uniformHandles[meshIndex]), meshInstanceHandle);
-
-          g_meshInstanceHandle[meshIndex][g_meshCount[meshIndex]] = meshInstanceHandle;
-          g_meshInstanceIndex[meshIndex][g_meshCount[meshIndex]] = meshInstanceIndex;
-
-          g_meshCount[meshIndex]++;
-        }
-        else
-        {
-          // if we've run out, reuse an existing one
-          if (g_meshCounter[meshIndex] == g_fruitCount)
-          {
-              g_meshMultiplier[meshIndex] += 1.0f;
-              g_meshCounter[meshIndex] -= g_fruitCount;
-          }
-
-          meshInstanceHandle = g_meshInstanceHandle[meshIndex][g_meshCounter[meshIndex]];
-          meshInstanceIndex = g_meshInstanceIndex[meshIndex][g_meshCounter[meshIndex]];
-
-          g_meshCounter[meshIndex] = g_meshCounter[meshIndex] + 1;
+            g_meshCounter[meshIndex] -= g_fruitCount;
         }
 
-        AsMeshInstance* meshInstance = as_vulkan_mesh_instance(app.asVulkan, meshInstanceHandle);
+        meshInstanceHandle = g_meshInstanceHandle[meshIndex][g_meshCounter[meshIndex]];
+        meshInstanceIndex = g_meshInstanceIndex[meshIndex][g_meshCounter[meshIndex]];
 
-        as_mesh_instance_mesh(meshInstance, g_meshHandles[meshIndex]);
-        as_mesh_instance_uniform(meshInstance, g_uniformHandles[meshIndex]);
-        as_mesh_instance_index(meshInstance, meshInstanceIndex);
+        g_meshCounter[meshIndex] = g_meshCounter[meshIndex] + 1;
+      }
 
-        as_mesh_instance_transform(
-            meshInstance, as::mat4_from_vec3(
-              as::vec3(-60.0f + (meshInstanceIndex) + (g_meshMultiplier[meshIndex] * 20.0f), -3.0f + meshIndex * 3.0f, 0.0f)));
-        as_mesh_instance_percent(meshInstance, 0.0f);
-        as_mesh_instance_rot(meshInstance, as::mat4::identity());
-        as_mesh_instance_time(meshInstance, std::chrono::high_resolution_clock::now());
+      AsMeshInstance* meshInstance =
+        as_vulkan_mesh_instance(app.asVulkan, meshInstanceHandle);
 
-        meshIndex = (meshIndex + 1) % g_fruitTypeCount;
+      as_mesh_instance_mesh(meshInstance, g_meshHandles[meshIndex]);
+      as_mesh_instance_uniform(meshInstance, g_uniformHandles[meshIndex]);
+      as_mesh_instance_index(meshInstance, meshInstanceIndex);
 
-        timer -= spawnDelay;
+      as_mesh_instance_transform(
+        meshInstance, as::mat4_from_vec3(
+          as::vec3(
+            -9.5f + meshInstanceIndex + (g_meshMultiplier[meshIndex] * 20.0f),
+            -3.0f + meshIndex * 3.0f, 0.0f)));
+      as_mesh_instance_percent(meshInstance, 0.0f);
+      as_mesh_instance_rot(meshInstance, as::mat4::identity());
+      as_mesh_instance_time(meshInstance, std::chrono::high_resolution_clock::now());
+
+      meshIndex = (meshIndex + 1) % g_fruitTypeCount;
+
+      timer -= spawnDelay;
     }
 
-    as_vulkan_update_uniform_buffer(app.asVulkan, as::mat4_from_affine(camera.view()));
+    as_vulkan_update_uniform_buffer(
+      app.asVulkan, as::mat4_from_affine(camera.view()));
 
     as_vulkan_draw_frame(app.asVulkan);
   }

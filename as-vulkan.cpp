@@ -1956,7 +1956,8 @@ void as_vulkan_update_uniform_buffer(AsVulkan* asVulkan, const as::mat4& view)
             float y = std::sin(time * 1.7453292519f);
             as::mat4 t = as::mat4_from_mat3(as::mat3_scale(y));
 
-            as::mat4 transform = asVulkan->meshInstances[uniform.meshInstanceHandles[i]].transform;
+            as::mat4 transform =
+              asVulkan->meshInstances[uniform.meshInstanceHandles[i]].transform;
 
             UniformBufferObject ubo;
             ubo.mvp = proj * view * transform * t * asVulkan->meshInstances[uniform.meshInstanceHandles[i]].rot;
