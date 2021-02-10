@@ -4,6 +4,7 @@ project(vulkan-fruit LANGUAGES CXX)
 
 find_package(Vulkan REQUIRED)
 find_package(SDL2 REQUIRED CONFIG)
+find_package(tinyobjloader REQUIRED CONFIG)
 
 include(FetchContent)
 
@@ -17,11 +18,11 @@ FetchContent_MakeAvailable(as-camera-input)
 add_executable(${PROJECT_NAME} main.cpp as-vulkan.cpp)
 target_link_libraries(
   ${PROJECT_NAME} PRIVATE
-  Vulkan::Vulkan as-camera-input SDL2::SDL2 SDL2::SDL2main)
+  Vulkan::Vulkan as-camera-input SDL2::SDL2 SDL2::SDL2main
+  tinyobjloader::tinyobjloader)
 target_include_directories(
   ${PROJECT_NAME} PRIVATE
-  third-party/stb
-  third-party/tinyobjloader)
+  third-party/stb)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
