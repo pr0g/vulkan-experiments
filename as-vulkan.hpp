@@ -35,7 +35,7 @@ void as_vulkan_create_uniform_buffer(AsVulkan* asVulkan, AsVulkanUniform* asUnif
 void as_vulkan_create_descriptor_pool(AsVulkan* asVulkan);
 void as_vulkan_create_descriptor_set(AsVulkan* asVulkan, AsVulkanUniform* asUniform, AsVulkanImage* asImage);
 void as_vulkan_create_image_sampler(AsVulkan* asVulkan);
-void as_vulkan_update_uniform_buffer(AsVulkan* asVulkan, const as::mat4& view);
+void as_vulkan_update_uniform_buffer(AsVulkan* asVulkan, const as::mat4& view, float time);
 void as_vulkan_draw_frame(AsVulkan* asVulkan);
 void as_vulkan_debug(AsVulkan* asVulkan);
 void as_vulkan_cleanup(AsVulkan* asVulkan);
@@ -62,8 +62,6 @@ void as_mesh_instance_index(AsMeshInstance* meshInstance, size_t instanceIndex);
 void as_mesh_instance_transform(AsMeshInstance* meshInstance, const as::mat4& transform);
 void as_mesh_instance_rot(AsMeshInstance* meshInstance, const as::mat4& rot);
 void as_mesh_instance_percent(AsMeshInstance* meshInstance, float offset);
-void as_mesh_instance_time(
-    AsMeshInstance* meshInstance,
-    std::chrono::time_point<std::chrono::steady_clock> time);
+void as_mesh_instance_time(AsMeshInstance* meshInstance, float time);
 
 size_t as_uniform_add_mesh_instance(AsVulkanUniform* asUniform, size_t handle);

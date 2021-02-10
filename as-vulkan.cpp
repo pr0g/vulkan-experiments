@@ -94,7 +94,7 @@ struct AsMeshInstance
     as::mat4 transform;
     as::mat4 rot;
     float percent;
-    std::chrono::time_point<std::chrono::steady_clock> time;
+    float time;
 
     size_t meshHandle; // actual mesh the instance is referring to
     size_t uniformHandle; // uniform buffer being used for this mesh instance
@@ -593,7 +593,7 @@ void as_mesh_instance_percent(AsMeshInstance* meshInstance, float percent)
 }
 
 void as_mesh_instance_time(
-    AsMeshInstance* meshInstance, std::chrono::time_point<std::chrono::steady_clock> time)
+    AsMeshInstance* meshInstance, float time)
 {
     meshInstance->time = time;
 }
@@ -1928,7 +1928,8 @@ void as_vulkan_prepare_frame(
     }
 }
 
-void as_vulkan_update_uniform_buffer(AsVulkan* asVulkan, const as::mat4& view)
+void as_vulkan_update_uniform_buffer(
+    AsVulkan* asVulkan, const as::mat4& view, float deltaTime)
 {
     for (AsVulkanUniform& uniform : asVulkan->uniforms)
     {
@@ -1936,9 +1937,6 @@ void as_vulkan_update_uniform_buffer(AsVulkan* asVulkan, const as::mat4& view)
         {
             continue;
         }
-
-        using fp_seconds =
-            std::chrono::duration<float, std::chrono::seconds::period>;
 
         VkDeviceSize uniformAlignment = as_vulkan_uniform_alignment<UniformBufferObject>(asVulkan->alignment);
 
@@ -1955,14 +1953,14 @@ void as_vulkan_update_uniform_buffer(AsVulkan* asVulkan, const as::mat4& view)
 
         for (size_t i = 0; i < uniform.meshInstanceHandles.size(); ++i)
         {
-            auto startTime = asVulkan->meshInstances[uniform.meshInstanceHandles[i]].time;
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            float time = fp_seconds(currentTime - startTime).count();
-
             // PI / (number_of_meshes_of_type * number_of_types * spawn_delay)
             // PI / (20 * 3 * 0.03) == PI / 1.8 == 1.7453292519
-            float y = std::sin(time * 1.7453292519f);
-            as::mat4 t = as::mat4_from_mat3(as::mat3_scale(y));
+            float y = std::sin(
+                asVulkan->meshInstances[uniform.meshInstanceHandles[i]].time
+                * 1.047197551196f);
+            const as::mat4 t = as::mat4_from_mat3(as::mat3_scale(y));
+
+            asVulkan->meshInstances[uniform.meshInstanceHandles[i]].time += deltaTime;
 
             as::mat4 transform =
               asVulkan->meshInstances[uniform.meshInstanceHandles[i]].transform;

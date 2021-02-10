@@ -274,8 +274,8 @@ int main(int argc, char** argv) {
   using fp_seconds =
     std::chrono::duration<float, std::chrono::seconds::period>;
 
-  float spawnDelay = 0.03f;
-  float timer = spawnDelay;
+  float spawnDelay = 0.05f;
+  float timer = 0.5f;
 
   asci::SmoothProps smooth_props{};
   asc::Camera camera{};
@@ -300,9 +300,9 @@ int main(int argc, char** argv) {
   asci::CameraSystem camera_system;
   camera_system.cameras_ = cameras;
 
-  auto previousTime = std::chrono::high_resolution_clock::now();
+  auto previousTime = std::chrono::steady_clock::now();
   for (bool quit = false; !quit;) {
-    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
     auto deltaTime = fp_seconds(currentTime - previousTime);
     previousTime = currentTime;
 
@@ -319,8 +319,8 @@ int main(int argc, char** argv) {
     camera = asci::smoothCamera(
       camera, target_camera, asci::SmoothProps{}, deltaTime.count());
 
-    timer += deltaTime.count();
-    if (timer >= spawnDelay)
+    timer -= deltaTime.count();
+    if (timer <= 0.0f)
     {
       static size_t meshIndex = 0;
 
@@ -366,15 +366,15 @@ int main(int argc, char** argv) {
             -3.0f + meshIndex * 3.0f, 0.0f)));
       as_mesh_instance_percent(meshInstance, 0.0f);
       as_mesh_instance_rot(meshInstance, as::mat4::identity());
-      as_mesh_instance_time(meshInstance, std::chrono::high_resolution_clock::now());
+      as_mesh_instance_time(meshInstance, 0.0f);
 
       meshIndex = (meshIndex + 1) % g_fruitTypeCount;
 
-      timer -= spawnDelay;
+      timer += spawnDelay;
     }
 
     as_vulkan_update_uniform_buffer(
-      app.asVulkan, as::mat4_from_affine(camera.view()));
+      app.asVulkan, as::mat4_from_affine(camera.view()), deltaTime.count());
 
     as_vulkan_draw_frame(app.asVulkan);
   }
