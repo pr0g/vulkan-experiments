@@ -19,6 +19,7 @@ void as_vulkan_create(AsVulkan** asVulkan);
 void as_vulkan_destroy(AsVulkan** asVulkan);
 
 void as_vulkan_create_instance(AsVulkan* asVulkan, SDL_Window* window);
+void as_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window);
 void as_vulkan_pick_physical_device(AsVulkan* asVulkan);
 void as_vulkan_create_logical_device(AsVulkan* asVulkan);
 void as_vulkan_create_swap_chain(AsVulkan* asVulkan);

@@ -1,6 +1,4 @@
 #include "as-vulkan.hpp"
-// #include "as-vulkan-win32.hpp"
-#include "as-vulkan-sdl.hpp"
 #include "SDL_vulkan.h"
 
 #include <algorithm>
@@ -13,11 +11,6 @@
 #define VK_USE_PLATFORM_MACOS_MVK
 #include <vulkan/vulkan.h>
 
-// #include "core/as-log.hpp"
-// #include "core/as-assert.hpp"
-#include "as/as-types.hpp"
-// #include "core/as-file.hpp"
-#include "as/as-math.hpp"
 #include "as/as-math-ops.hpp"
 #include "as/as-view.hpp"
 

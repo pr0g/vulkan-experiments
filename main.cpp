@@ -1,5 +1,4 @@
 #include "as-vulkan.hpp"
-#include "as-vulkan-sdl.hpp"
 
 #include "as/as-math-ops.hpp"
 #include "as-camera-input/as-camera-input.hpp"
