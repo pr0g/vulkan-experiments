@@ -133,9 +133,9 @@ int main(int argc, char** argv) {
   App app;
 
   as_vulkan_create(&app.asVulkan);
-  as_vulkan_create_instance(app.asVulkan);
+  as_vulkan_create_instance(app.asVulkan, window);
 #ifndef NDEBUG
-  // as_vulkan_debug(app.asVulkan); // update me
+  as_vulkan_debug(app.asVulkan);
 #endif // _DEBUG
   as_vulkan_create_surface(app.asVulkan, window);
   as_vulkan_pick_physical_device(app.asVulkan);
@@ -195,8 +195,12 @@ int main(int argc, char** argv) {
 
   const size_t bananaCount = g_fruitCount;
   size_t bananaUniformHandle = as_vulkan_allocate_uniform(app.asVulkan);
-  as_vulkan_create_uniform_buffer(app.asVulkan, as_vulkan_uniform(app.asVulkan, bananaUniformHandle), bananaCount);
-  as_vulkan_create_descriptor_set(app.asVulkan, as_vulkan_uniform(app.asVulkan, bananaUniformHandle), as_vulkan_image(app.asVulkan, bananaTextureHandle));
+  as_vulkan_create_uniform_buffer(
+    app.asVulkan, as_vulkan_uniform(app.asVulkan, bananaUniformHandle),
+    bananaCount);
+  as_vulkan_create_descriptor_set(
+    app.asVulkan, as_vulkan_uniform(app.asVulkan, bananaUniformHandle),
+    as_vulkan_image(app.asVulkan, bananaTextureHandle));
 
   /////////////////////////////////////////////////
 

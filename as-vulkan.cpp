@@ -154,7 +154,7 @@ struct AsVulkan
     std::vector<AsMeshInstance> meshInstances;
 
     AsVulkanAlignment alignment;
-    VkDebugReportCallbackEXT callback;
+    VkDebugUtilsMessengerEXT debugMessenger;
 };
 
 struct UniformBufferObject
@@ -508,16 +508,12 @@ VkPresentModeKHR as_vulkan_choose_swap_present_mode(const std::vector<VkPresentM
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL as_vulkan_debug_callback(
-    VkDebugReportFlagsEXT /*flags*/,
-    VkDebugReportObjectTypeEXT /*objType*/,
-    uint64_t /*obj*/,
-    size_t /*location*/,
-    int32_t /*code*/,
-    const char* layerPrefix,
-    const char* msg,
-    void* /*userData*/)
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
+    void* pUserData)
 {
-    std::cerr << "validation layer: " << layerPrefix << " " << msg;
+    std::cerr << "validation layer: " << callbackData->pMessage << '\n';;
     return VK_FALSE;
 }
 
@@ -623,13 +619,15 @@ size_t as_uniform_add_mesh_instance(AsVulkanUniform* asUniform, size_t meshHandl
     return asUniform->meshInstanceHandles.size() - 1;
 }
 
-VkResult as_vulkan_create_debug_report_callback_ext(
-    VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* createInfo,
-    const VkAllocationCallbacks* allocator, VkDebugReportCallbackEXT* callback)
+VkResult as_vulkan_create_debug_utils_messenger_ext(
+    VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* createInfo,
+    const VkAllocationCallbacks* allocator,
+    VkDebugUtilsMessengerEXT* debugMessenger)
 {
-    if (auto func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"))
+    if (auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        instance, "vkCreateDebugUtilsMessengerEXT"))
     {
-        return func(instance, createInfo, allocator, callback);
+        return func(instance, createInfo, allocator, debugMessenger);
     }
     else
     {
@@ -637,12 +635,14 @@ VkResult as_vulkan_create_debug_report_callback_ext(
     }
 }
 
-VkResult as_vulkan_destroy_debug_report_callback_ext(
-    VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* allocator)
+VkResult as_vulkan_destroy_debug_utils_messenger_ext(
+    VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
+    const VkAllocationCallbacks* allocator)
 {
-    if (auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT"))
+    if (auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        instance, "vkDestroyDebugUtilsMessengerEXT"))
     {
-        func(instance, callback, allocator);
+        func(instance, debugMessenger, allocator);
         return VK_SUCCESS;
     }
     else
@@ -653,13 +653,21 @@ VkResult as_vulkan_destroy_debug_report_callback_ext(
 
 void as_vulkan_debug(AsVulkan* asVulkan)
 {
-    VkDebugReportCallbackCreateInfoEXT createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-    createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-    createInfo.pfnCallback = as_vulkan_debug_callback;
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType =
+        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+        | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+        | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = as_vulkan_debug_callback;
+    createInfo.pUserData = nullptr;
 
-    if (as_vulkan_create_debug_report_callback_ext(
-        asVulkan->instance, &createInfo, nullptr, &asVulkan->callback) != VK_SUCCESS)
+    if (as_vulkan_create_debug_utils_messenger_ext(
+        asVulkan->instance, &createInfo, nullptr, &asVulkan->debugMessenger) != VK_SUCCESS)
     {
         std::cerr << "failed to setup debug callback\n";
         std::exit(EXIT_FAILURE);
@@ -2063,7 +2071,7 @@ void as_vulkan_draw_frame(AsVulkan* asVulkan)
     }
 }
 
-void as_vulkan_create_instance(AsVulkan* asVulkan)
+void as_vulkan_create_instance(AsVulkan* asVulkan, SDL_Window* window)
 {
     if (s_enableValidationLayers && !as_vulkan_check_validation_layer_support())
     {
@@ -2090,24 +2098,30 @@ void as_vulkan_create_instance(AsVulkan* asVulkan)
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    std::vector<const char*> enabledExtensions = { VK_KHR_SURFACE_EXTENSION_NAME };
-#ifdef _WIN32
-    enabledExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#endif
+    std::vector<const char*> enabledExtensions;
 
-// fix for SDL
-#ifdef __APPLE__
-    enabledExtensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-#endif
+    uint32_t count;
+    if (!SDL_Vulkan_GetInstanceExtensions(window, &count, nullptr))
+    {
+        std::cerr << "failed to get instance extensions\n";
+        std::exit(EXIT_FAILURE);
+    }
 
-#ifdef _DEBUG
-    enabledExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-#endif
+    size_t additional_extension_count = enabledExtensions.size();
+    enabledExtensions.resize(additional_extension_count + count);
+
+    if (!SDL_Vulkan_GetInstanceExtensions(
+        window, &count, enabledExtensions.data() + additional_extension_count))
+    {
+        std::cerr << "failed to get instance extensions\n";
+        std::exit(EXIT_FAILURE);
+    }
 
     VkInstanceCreateInfo createInfo{};
-
     if (s_enableValidationLayers)
     {
+        enabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
         createInfo.enabledLayerCount = static_cast<uint32_t>(s_validationLayers.size());
         createInfo.ppEnabledLayerNames = s_validationLayers.data();
     }
@@ -2163,7 +2177,8 @@ void as_vulkan_cleanup(AsVulkan* asVulkan)
     }
 
     vkDestroyDevice(asVulkan->device, nullptr);
-    as_vulkan_destroy_debug_report_callback_ext(asVulkan->instance, asVulkan->callback, nullptr);
+    as_vulkan_destroy_debug_utils_messenger_ext(
+        asVulkan->instance, asVulkan->debugMessenger, nullptr);
     vkDestroySurfaceKHR(asVulkan->instance, asVulkan->surface, nullptr);
     vkDestroyInstance(asVulkan->instance, nullptr);
 }
@@ -2177,21 +2192,6 @@ void as_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window)
         std::exit(EXIT_FAILURE);
     }
 }
-
-// void as_vulkan_create_surface(AsVulkan* asVulkan, HWND hwnd, HINSTANCE hinstance)
-// {
-//     VkWin32SurfaceCreateInfoKHR createInfo{};
-//     createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-//     createInfo.hwnd = hwnd;
-//     createInfo.hinstance = hinstance;
-
-//     auto CreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(asVulkan->instance, "vkCreateWin32SurfaceKHR");
-//     if (!CreateWin32SurfaceKHR || CreateWin32SurfaceKHR(asVulkan->instance, &createInfo, nullptr, &asVulkan->surface) != VK_SUCCESS)
-//     {
-//         std::cerr << "failed to create window surface\n";
-//         std::exit(EXIT_FAILURE);
-//     }
-// }
 
 void as_vulkan_create_image(
     AsVulkan* asVulkan, uint32_t width, uint32_t height, VkFormat format,
