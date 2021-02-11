@@ -28,4 +28,5 @@ target_compile_definitions(${PROJECT_NAME}
     PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
             $<$<BOOL:${AS_PRECISION_DOUBLE}>:AS_PRECISION_DOUBLE>
             $<$<BOOL:${AS_COL_MAJOR}>:AS_COL_MAJOR>
-            $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>)
+            $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>
+            -DAS_VULKAN_SDL)

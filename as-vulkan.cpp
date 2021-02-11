@@ -1,5 +1,7 @@
 #include "as-vulkan.hpp"
+#ifdef AS_VULKAN_SDL
 #include "SDL_vulkan.h"
+#endif // AS_VULKAN_SDL
 
 #include <algorithm>
 #include <array>
@@ -2062,7 +2064,9 @@ void as_vulkan_draw_frame(AsVulkan* asVulkan)
     }
 }
 
-void as_vulkan_create_instance(AsVulkan* asVulkan, SDL_Window* window)
+void as_vulkan_create_instance(
+    AsVulkan* asVulkan, const char* instance_extensions[],
+    int64_t instance_extension_count)
 {
     if (s_enableValidationLayers && !as_vulkan_check_validation_layer_support())
     {
@@ -2089,24 +2093,8 @@ void as_vulkan_create_instance(AsVulkan* asVulkan, SDL_Window* window)
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    std::vector<const char*> enabledExtensions;
-
-    uint32_t count;
-    if (!SDL_Vulkan_GetInstanceExtensions(window, &count, nullptr))
-    {
-        std::cerr << "failed to get instance extensions\n";
-        std::exit(EXIT_FAILURE);
-    }
-
-    size_t additional_extension_count = enabledExtensions.size();
-    enabledExtensions.resize(additional_extension_count + count);
-
-    if (!SDL_Vulkan_GetInstanceExtensions(
-        window, &count, enabledExtensions.data() + additional_extension_count))
-    {
-        std::cerr << "failed to get instance extensions\n";
-        std::exit(EXIT_FAILURE);
-    }
+    std::vector<const char*> enabledExtensions(
+        instance_extensions, instance_extensions + instance_extension_count);
 
     VkInstanceCreateInfo createInfo{};
     if (s_enableValidationLayers)
@@ -2174,7 +2162,8 @@ void as_vulkan_cleanup(AsVulkan* asVulkan)
     vkDestroyInstance(asVulkan->instance, nullptr);
 }
 
-void as_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window)
+#ifdef AS_VULKAN_SDL
+void as_sdl_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window)
 {
     if (!SDL_Vulkan_CreateSurface(
         window, asVulkan->instance, &asVulkan->surface))
@@ -2183,6 +2172,28 @@ void as_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window)
         std::exit(EXIT_FAILURE);
     }
 }
+
+void sdl_vulkan_instance_extensions(
+    SDL_Window* window, const char**& instance_extensions,
+    uint32_t& instance_extension_count)
+{
+    if (!SDL_Vulkan_GetInstanceExtensions(
+        window, &instance_extension_count, nullptr))
+    {
+        std::cerr << "failed to get instance extensions\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+    instance_extensions = new const char*[instance_extension_count];
+
+    if (!SDL_Vulkan_GetInstanceExtensions(
+        window, &instance_extension_count, instance_extensions))
+    {
+        std::cerr << "failed to get instance extensions\n";
+        std::exit(EXIT_FAILURE);
+    }
+}
+#endif // AS_VULKAN_SDL
 
 void as_vulkan_create_image(
     AsVulkan* asVulkan, uint32_t width, uint32_t height, VkFormat format,

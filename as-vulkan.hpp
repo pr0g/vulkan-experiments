@@ -1,11 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <chrono>
 
 #include "as/as-mat4.hpp"
-
-struct SDL_Window;
 
 struct AsVulkan;
 struct AsVulkanMesh;
@@ -18,8 +15,18 @@ struct AsMeshInstance;
 void as_vulkan_create(AsVulkan** asVulkan);
 void as_vulkan_destroy(AsVulkan** asVulkan);
 
-void as_vulkan_create_instance(AsVulkan* asVulkan, SDL_Window* window);
-void as_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window);
+void as_vulkan_create_instance(
+  AsVulkan* asVulkan, const char* instance_extensions[],
+  int64_t instance_extension_count);
+
+#ifdef AS_VULKAN_SDL
+struct SDL_Window;
+void as_sdl_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window);
+void sdl_vulkan_instance_extensions(
+  SDL_Window* window, const char**& instance_extensions,
+  uint32_t& instance_extension_count);
+#endif // AS_VULKAN_SDL
+
 void as_vulkan_pick_physical_device(AsVulkan* asVulkan);
 void as_vulkan_create_logical_device(AsVulkan* asVulkan);
 void as_vulkan_create_swap_chain(AsVulkan* asVulkan);

@@ -6,6 +6,8 @@
 #include "SDL.h"
 #include "SDL_syswm.h"
 
+#include <chrono>
+
 // hack
 const size_t g_fruitCount = 20;
 const size_t g_fruitTypeCount = 3;
@@ -100,7 +102,6 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
 }
 
 int main(int argc, char** argv) {
-
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
     return 1;
@@ -132,11 +133,17 @@ int main(int argc, char** argv) {
   App app;
 
   as_vulkan_create(&app.asVulkan);
-  as_vulkan_create_instance(app.asVulkan, window);
+  const char** instance_extensions;
+	uint32_t instance_extensions_count = 0;
+  sdl_vulkan_instance_extensions(
+    window, instance_extensions, instance_extensions_count);
+  as_vulkan_create_instance(
+    app.asVulkan, instance_extensions, instance_extensions_count);
+  delete[] instance_extensions;
 #ifndef NDEBUG
   as_vulkan_debug(app.asVulkan);
 #endif // _DEBUG
-  as_vulkan_create_surface(app.asVulkan, window);
+  as_sdl_vulkan_create_surface(app.asVulkan, window);
   as_vulkan_pick_physical_device(app.asVulkan);
   as_vulkan_create_logical_device(app.asVulkan);
   as_vulkan_create_swap_chain(app.asVulkan);
