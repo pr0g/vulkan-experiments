@@ -8,6 +8,8 @@ This implementation uses SDL instead of GLFW and follows a more C-like API desig
 
 It's very much a WIP and is not ready for use other than as a learning tool.
 
+![curves](vulkan-fruit.png)
+
 ## Dependencies
 
 Currently tested on macOS.
