@@ -1839,7 +1839,7 @@ void as_vulkan_prepare_frame(
     }
 
     VkClearValue clearValues[2]{};
-    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[0].color = { { 0.392f, 0.584f, 0.929f, 1.0f } };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     VkRenderPassBeginInfo renderPassInfo{};
