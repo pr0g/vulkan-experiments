@@ -75,12 +75,12 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      return asci::MouseMotionEvent{
+      return asci::CursorMotionEvent{
         {mouse_motion_event->x, mouse_motion_event->y}};
     }
     case SDL_MOUSEWHEEL: {
       const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
-      return asci::MouseWheelEvent{mouse_wheel_event->y};
+      return asci::ScrollEvent{mouse_wheel_event->y};
     }
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouse_event = (SDL_MouseButtonEvent*)event;
@@ -303,7 +303,7 @@ int main(int argc, char** argv) {
   auto first_person_pan_camera = asci::PanCameraInput{asci::lookPan};
   auto first_person_translate_camera =
     asci::TranslateCameraInput{asci::lookTranslation};
-  auto first_person_wheel_camera = asci::WheelTranslationCameraInput{};
+  auto first_person_wheel_camera = asci::ScrollTranslationCameraInput{};
 
   asci::Cameras cameras;
   cameras.addCamera(&first_person_rotate_camera);
