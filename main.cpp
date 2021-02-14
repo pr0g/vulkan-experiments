@@ -22,6 +22,14 @@ size_t g_meshInstanceHandle[g_fruitTypeCount][g_fruitCount]{};
 size_t g_meshCounter[g_fruitTypeCount]{ g_fruitCount, g_fruitCount, g_fruitCount };
 float g_meshMultiplier[g_fruitTypeCount]{ 0.0f, 0.0f, 0.0f };
 
+namespace asc
+{
+  Handedness handedness()
+  {
+    return Handedness::Right;
+  }
+}
+
 asci::MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
 {
   switch (event->button) {
