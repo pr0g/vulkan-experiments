@@ -133,36 +133,30 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  struct App
-  {
-    AsVulkan* asVulkan = nullptr;
-  };
-
-  App app;
-
-  as_vulkan_create(&app.asVulkan);
+  AsVulkan* asVulkan = nullptr;
+  as_vulkan_create(&asVulkan);
   const char** instance_extensions;
 	uint32_t instance_extensions_count = 0;
   sdl_vulkan_instance_extensions(
     window, instance_extensions, instance_extensions_count);
   as_vulkan_create_instance(
-    app.asVulkan, instance_extensions, instance_extensions_count);
+    asVulkan, instance_extensions, instance_extensions_count);
   delete[] instance_extensions;
 #ifndef NDEBUG
-  as_vulkan_debug(app.asVulkan);
+  as_vulkan_debug(asVulkan);
 #endif // _DEBUG
-  as_sdl_vulkan_create_surface(app.asVulkan, window);
-  as_vulkan_pick_physical_device(app.asVulkan);
-  as_vulkan_create_logical_device(app.asVulkan);
-  as_vulkan_create_swap_chain(app.asVulkan);
-  as_vulkan_create_image_views(app.asVulkan);
-  as_vulkan_create_render_pass(app.asVulkan);
-  as_vulkan_create_descriptor_set_layout(app.asVulkan);
-  as_vulkan_create_graphics_pipeline(app.asVulkan);
-  as_vulkan_create_rendering_resources(app.asVulkan);
-  as_vulkan_create_depth_resources(app.asVulkan);
-  as_vulkan_create_image_sampler(app.asVulkan);
-  as_vulkan_create_descriptor_pool(app.asVulkan);
+  as_sdl_vulkan_create_surface(asVulkan, window);
+  as_vulkan_pick_physical_device(asVulkan);
+  as_vulkan_create_logical_device(asVulkan);
+  as_vulkan_create_swap_chain(asVulkan);
+  as_vulkan_create_image_views(asVulkan);
+  as_vulkan_create_render_pass(asVulkan);
+  as_vulkan_create_descriptor_set_layout(asVulkan);
+  as_vulkan_create_graphics_pipeline(asVulkan);
+  as_vulkan_create_rendering_resources(asVulkan);
+  as_vulkan_create_depth_resources(asVulkan);
+  as_vulkan_create_image_sampler(asVulkan);
+  as_vulkan_create_descriptor_pool(asVulkan);
 
   ////////////////////////////////////////////////////////////////////
 
@@ -170,25 +164,25 @@ int main(int argc, char** argv) {
   as_create_mesh(&appleMesh);
   as_load_mesh(appleMesh, "assets/models/apple.obj");
 
-  size_t appleTextureHandle = as_vulkan_allocate_image(app.asVulkan);
+  size_t appleTextureHandle = as_vulkan_allocate_image(asVulkan);
   as_vulkan_create_as_image(
-    app.asVulkan, as_vulkan_image(app.asVulkan, appleTextureHandle),
+    asVulkan, as_vulkan_image(asVulkan, appleTextureHandle),
     "assets/models/appleD.jpg");
 
-  size_t appleMeshHandle = as_vulkan_allocate_mesh(app.asVulkan);
+  size_t appleMeshHandle = as_vulkan_allocate_mesh(asVulkan);
   as_vulkan_create_vertex_buffer(
-    app.asVulkan, as_vulkan_mesh(app.asVulkan, appleMeshHandle), appleMesh);
+    asVulkan, as_vulkan_mesh(asVulkan, appleMeshHandle), appleMesh);
   as_vulkan_create_index_buffer(
-    app.asVulkan, as_vulkan_mesh(app.asVulkan, appleMeshHandle), appleMesh);
+    asVulkan, as_vulkan_mesh(asVulkan, appleMeshHandle), appleMesh);
 
   const size_t appleCount = g_fruitCount;
-  size_t appleUniformHandle = as_vulkan_allocate_uniform(app.asVulkan);
+  size_t appleUniformHandle = as_vulkan_allocate_uniform(asVulkan);
   as_vulkan_create_uniform_buffer(
-    app.asVulkan, as_vulkan_uniform(app.asVulkan, appleUniformHandle),
+    asVulkan, as_vulkan_uniform(asVulkan, appleUniformHandle),
     appleCount);
   as_vulkan_create_descriptor_set(
-    app.asVulkan, as_vulkan_uniform(app.asVulkan, appleUniformHandle),
-    as_vulkan_image(app.asVulkan, appleTextureHandle));
+    asVulkan, as_vulkan_uniform(asVulkan, appleUniformHandle),
+    as_vulkan_image(asVulkan, appleTextureHandle));
 
   /////////////////////////////////////////////////
 
@@ -196,25 +190,25 @@ int main(int argc, char** argv) {
   as_create_mesh(&bananaMesh);
   as_load_mesh(bananaMesh, "assets/models/banana.obj");
 
-  size_t bananaTextureHandle = as_vulkan_allocate_image(app.asVulkan);
+  size_t bananaTextureHandle = as_vulkan_allocate_image(asVulkan);
   as_vulkan_create_as_image(
-    app.asVulkan, as_vulkan_image(
-      app.asVulkan, bananaTextureHandle), "assets/models/banana.jpg");
+    asVulkan, as_vulkan_image(
+      asVulkan, bananaTextureHandle), "assets/models/banana.jpg");
 
-  size_t bananaMeshHandle = as_vulkan_allocate_mesh(app.asVulkan);
+  size_t bananaMeshHandle = as_vulkan_allocate_mesh(asVulkan);
   as_vulkan_create_vertex_buffer(
-    app.asVulkan, as_vulkan_mesh(app.asVulkan, bananaMeshHandle), bananaMesh);
+    asVulkan, as_vulkan_mesh(asVulkan, bananaMeshHandle), bananaMesh);
   as_vulkan_create_index_buffer(
-    app.asVulkan, as_vulkan_mesh(app.asVulkan, bananaMeshHandle), bananaMesh);
+    asVulkan, as_vulkan_mesh(asVulkan, bananaMeshHandle), bananaMesh);
 
   const size_t bananaCount = g_fruitCount;
-  size_t bananaUniformHandle = as_vulkan_allocate_uniform(app.asVulkan);
+  size_t bananaUniformHandle = as_vulkan_allocate_uniform(asVulkan);
   as_vulkan_create_uniform_buffer(
-    app.asVulkan, as_vulkan_uniform(app.asVulkan, bananaUniformHandle),
+    asVulkan, as_vulkan_uniform(asVulkan, bananaUniformHandle),
     bananaCount);
   as_vulkan_create_descriptor_set(
-    app.asVulkan, as_vulkan_uniform(app.asVulkan, bananaUniformHandle),
-    as_vulkan_image(app.asVulkan, bananaTextureHandle));
+    asVulkan, as_vulkan_uniform(asVulkan, bananaUniformHandle),
+    as_vulkan_image(asVulkan, bananaTextureHandle));
 
   /////////////////////////////////////////////////
 
@@ -222,61 +216,24 @@ int main(int argc, char** argv) {
   as_create_mesh(&pearMesh);
   as_load_mesh(pearMesh, "assets/models/pear.obj");
 
-  size_t pearTextureHandle = as_vulkan_allocate_image(app.asVulkan);
+  size_t pearTextureHandle = as_vulkan_allocate_image(asVulkan);
   as_vulkan_create_as_image(
-    app.asVulkan, as_vulkan_image(app.asVulkan, pearTextureHandle),
+    asVulkan, as_vulkan_image(asVulkan, pearTextureHandle),
     "assets/models/pear.jpg");
 
-  size_t pearMeshHandle = as_vulkan_allocate_mesh(app.asVulkan);
+  size_t pearMeshHandle = as_vulkan_allocate_mesh(asVulkan);
   as_vulkan_create_vertex_buffer(
-    app.asVulkan, as_vulkan_mesh(app.asVulkan, pearMeshHandle), pearMesh);
+    asVulkan, as_vulkan_mesh(asVulkan, pearMeshHandle), pearMesh);
   as_vulkan_create_index_buffer(
-    app.asVulkan, as_vulkan_mesh(app.asVulkan, pearMeshHandle), pearMesh);
+    asVulkan, as_vulkan_mesh(asVulkan, pearMeshHandle), pearMesh);
 
   const size_t pearCount = g_fruitCount;
-  size_t pearUniformHandle = as_vulkan_allocate_uniform(app.asVulkan);
+  size_t pearUniformHandle = as_vulkan_allocate_uniform(asVulkan);
   as_vulkan_create_uniform_buffer(
-    app.asVulkan, as_vulkan_uniform(app.asVulkan, pearUniformHandle), pearCount);
+    asVulkan, as_vulkan_uniform(asVulkan, pearUniformHandle), pearCount);
   as_vulkan_create_descriptor_set(
-    app.asVulkan, as_vulkan_uniform(app.asVulkan, pearUniformHandle),
-    as_vulkan_image(app.asVulkan, pearTextureHandle));
-
-  auto layoutFruit = [&app](
-    float distance, size_t count, size_t offset,
-    size_t meshHandle, size_t uniformHandle, const as::mat4& rot)
-  {
-    size_t counter = 2;
-    for (size_t i = offset; i <= count; ++i)
-    {
-      if (counter != 2)
-      {
-          counter++;
-          continue;
-      }
-
-      size_t meshInstanceHandle = as_vulkan_allocate_mesh_instance(app.asVulkan);
-      AsMeshInstance* meshInstance =
-        as_vulkan_mesh_instance(app.asVulkan, meshInstanceHandle);
-
-      as_mesh_instance_mesh(meshInstance, meshHandle);
-      as_mesh_instance_uniform(meshInstance, uniformHandle);
-      as_mesh_instance_index(meshInstance,
-        as_uniform_add_mesh_instance(
-          as_vulkan_uniform(app.asVulkan, uniformHandle), meshInstanceHandle));
-
-      float percent = (i / (float)count);
-      float horizontalOffset = percent * distance;
-
-      as_mesh_instance_transform(
-        meshInstance, as::mat4_from_vec3(
-          as::vec3{ (-distance * 0.5f) + horizontalOffset, 0.0f, 0.0f }));
-      as_mesh_instance_percent(
-        meshInstance, sinf(percent * as::radians(360.0f)) * 2.0f);
-      as_mesh_instance_rot(meshInstance, rot);
-
-      counter = 0;
-    }
-  };
+    asVulkan, as_vulkan_uniform(asVulkan, pearUniformHandle),
+    as_vulkan_image(asVulkan, pearTextureHandle));
 
   g_meshHandles[0] = appleMeshHandle;
   g_uniformHandles[0] = appleUniformHandle;
@@ -343,9 +300,9 @@ int main(int argc, char** argv) {
       // actually allocate the mesh/uniform buffer
       if (g_meshCount[meshIndex] < g_fruitCount)
       {
-        meshInstanceHandle = as_vulkan_allocate_mesh_instance(app.asVulkan);
+        meshInstanceHandle = as_vulkan_allocate_mesh_instance(asVulkan);
         meshInstanceIndex = as_uniform_add_mesh_instance(as_vulkan_uniform(
-          app.asVulkan, g_uniformHandles[meshIndex]), meshInstanceHandle);
+          asVulkan, g_uniformHandles[meshIndex]), meshInstanceHandle);
 
         g_meshInstanceHandle[meshIndex][g_meshCount[meshIndex]] = meshInstanceHandle;
         g_meshInstanceIndex[meshIndex][g_meshCount[meshIndex]] = meshInstanceIndex;
@@ -367,7 +324,7 @@ int main(int argc, char** argv) {
       }
 
       AsMeshInstance* meshInstance =
-        as_vulkan_mesh_instance(app.asVulkan, meshInstanceHandle);
+        as_vulkan_mesh_instance(asVulkan, meshInstanceHandle);
 
       as_mesh_instance_mesh(meshInstance, g_meshHandles[meshIndex]);
       as_mesh_instance_uniform(meshInstance, g_uniformHandles[meshIndex]);
@@ -388,13 +345,13 @@ int main(int argc, char** argv) {
     }
 
     as_vulkan_update_uniform_buffer(
-      app.asVulkan, as::mat4_from_affine(camera.view()), deltaTime.count());
+      asVulkan, as::mat4_from_affine(camera.view()), deltaTime.count());
 
-    as_vulkan_draw_frame(app.asVulkan);
+    as_vulkan_draw_frame(asVulkan);
   }
 
-  as_vulkan_cleanup(app.asVulkan);
-  as_vulkan_destroy(&app.asVulkan);
+  as_vulkan_cleanup(asVulkan);
+  as_vulkan_destroy(&asVulkan);
 
   SDL_DestroyWindow(window);
   SDL_Quit();
