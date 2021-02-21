@@ -2098,7 +2098,7 @@ void as_vulkan_create_instance(
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "No Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_2;
 
     std::vector<const char*> enabledExtensions(
         instance_extensions, instance_extensions + instance_extension_count);
