@@ -9,14 +9,13 @@ find_package(tinyobjloader REQUIRED CONFIG)
 include(FetchContent)
 
 FetchContent_Declare(
-    as-camera-input
-    GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
-    GIT_TAG        777d7895874115bb81933f8e117414bf8efc9d29)
+  as-camera-input
+  GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
+  GIT_TAG        777d7895874115bb81933f8e117414bf8efc9d29)
 FetchContent_Declare(
   stb
   GIT_REPOSITORY https://github.com/pr0g/stb.git
   GIT_TAG        4230eecc3c7416841e89cf1bec1df9abb814e89b)
-  
 FetchContent_MakeAvailable(as-camera-input stb)
 
 add_executable(${PROJECT_NAME} main.cpp as-vulkan.cpp)
@@ -26,8 +25,8 @@ target_link_libraries(
   tinyobjloader::tinyobjloader)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 target_compile_definitions(${PROJECT_NAME}
-    PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
-            $<$<BOOL:${AS_PRECISION_DOUBLE}>:AS_PRECISION_DOUBLE>
-            $<$<BOOL:${AS_COL_MAJOR}>:AS_COL_MAJOR>
-            $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>
-            -DAS_VULKAN_SDL)
+  PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
+          $<$<BOOL:${AS_PRECISION_DOUBLE}>:AS_PRECISION_DOUBLE>
+          $<$<BOOL:${AS_COL_MAJOR}>:AS_COL_MAJOR>
+          $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>
+          -DAS_VULKAN_SDL)
