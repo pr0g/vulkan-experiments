@@ -16,15 +16,15 @@ void as_vulkan_create(AsVulkan** asVulkan);
 void as_vulkan_destroy(AsVulkan** asVulkan);
 
 void as_vulkan_create_instance(
-  AsVulkan* asVulkan, const char* instance_extensions[],
-  int64_t instance_extension_count);
+  AsVulkan* asVulkan, const char* required_instance_extensions[],
+  int64_t required_instance_extension_count);
 
 #ifdef AS_VULKAN_SDL
 struct SDL_Window;
 void as_sdl_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window);
 void sdl_vulkan_instance_extensions(
-  SDL_Window* window, const char**& instance_extensions,
-  uint32_t& instance_extension_count);
+  SDL_Window* window, const char**& required_instance_extensions,
+  uint32_t& required_instance_extension_count);
 #endif // AS_VULKAN_SDL
 
 void as_vulkan_pick_physical_device(AsVulkan* asVulkan);

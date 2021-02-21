@@ -2071,9 +2071,65 @@ void as_vulkan_draw_frame(AsVulkan* asVulkan)
     }
 }
 
+static void check_extensions_are_available(
+    const char* required_instance_extensions[],
+    int64_t required_instance_extension_count,
+    const std::vector<VkExtensionProperties>& available_instance_extensions)
+{
+    // build vector of available extension names
+    std::vector<const char*> available_extension_names;
+    std::transform(
+        available_instance_extensions.begin(),
+        available_instance_extensions.end(),
+        std::back_inserter(available_extension_names),
+        [](const auto& extensionProperties){
+            return extensionProperties.extensionName;
+        });
+
+    const auto string_sort_compare_less = [](const char* lhs, const char* rhs) {
+        return std::strcmp(lhs, rhs) < 0;
+    };
+
+    const auto string_sort_compare_equal = [](const char* lhs, const char* rhs) {
+        return std::strcmp(lhs, rhs) == 0;
+    };
+
+    // sort required and available extension lists
+    std::sort(
+        required_instance_extensions,
+        required_instance_extensions + required_instance_extension_count,
+        string_sort_compare_less);
+    std::sort(
+        available_extension_names.begin(), available_extension_names.end(),
+        string_sort_compare_less);
+
+    std::cout << "Available extensions: \n";
+    for (const auto& extension : available_extension_names) {
+        std::cout << extension << '\n';
+    }
+
+    std::cout << "Instance extensions: \n";
+    for (int64_t index = 0; index < required_instance_extension_count; ++index) {
+        std::cout << required_instance_extensions[index] << '\n';
+    }
+
+    // ensure required extensions can be found in the available list
+    if (const auto found = std::search(
+            available_extension_names.begin(), available_extension_names.end(),
+            required_instance_extensions,
+            required_instance_extensions + required_instance_extension_count,
+            string_sort_compare_equal);
+        found == available_extension_names.end())
+    {
+        std::cerr << "not all required instance extensions found "
+                     "in supported extension list\n";
+        std::exit(EXIT_FAILURE);
+    }
+}
+
 void as_vulkan_create_instance(
-    AsVulkan* asVulkan, const char* instance_extensions[],
-    int64_t instance_extension_count)
+    AsVulkan* asVulkan, const char* required_instance_extensions[],
+    int64_t required_instance_extension_count)
 {
     if (s_enableValidationLayers && !as_vulkan_check_validation_layer_support())
     {
@@ -2081,16 +2137,16 @@ void as_vulkan_create_instance(
         std::exit(EXIT_FAILURE);
     }
 
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> extensions(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+    uint32_t availableExtensionCount = 0;
+    vkEnumerateInstanceExtensionProperties(
+        nullptr, &availableExtensionCount, nullptr);
+    std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+    vkEnumerateInstanceExtensionProperties(
+        nullptr, &availableExtensionCount, availableExtensions.data());
 
-    std::cout << "available extensions: \n";
-    for (const auto& extension : extensions)
-    {
-        std::cout << extension.extensionName << '\n';
-    }
+    check_extensions_are_available(
+        required_instance_extensions, required_instance_extension_count,
+        availableExtensions);
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -2101,7 +2157,8 @@ void as_vulkan_create_instance(
     appInfo.apiVersion = VK_API_VERSION_1_2;
 
     std::vector<const char*> enabledExtensions(
-        instance_extensions, instance_extensions + instance_extension_count);
+        required_instance_extensions,
+        required_instance_extensions + required_instance_extension_count);
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -2186,20 +2243,22 @@ void as_sdl_vulkan_create_surface(AsVulkan* asVulkan, SDL_Window* window)
 }
 
 void sdl_vulkan_instance_extensions(
-    SDL_Window* window, const char**& instance_extensions,
-    uint32_t& instance_extension_count)
+    SDL_Window* window, const char**& required_instance_extensions,
+    uint32_t& required_instance_extension_count)
 {
     if (!SDL_Vulkan_GetInstanceExtensions(
-        window, &instance_extension_count, nullptr))
+        window, &required_instance_extension_count, nullptr))
     {
         std::cerr << "failed to get instance extensions\n";
         std::exit(EXIT_FAILURE);
     }
 
-    instance_extensions = new const char*[instance_extension_count];
+    required_instance_extensions =
+        new const char*[required_instance_extension_count];
 
     if (!SDL_Vulkan_GetInstanceExtensions(
-        window, &instance_extension_count, instance_extensions))
+        window, &required_instance_extension_count,
+        required_instance_extensions))
     {
         std::cerr << "failed to get instance extensions\n";
         std::exit(EXIT_FAILURE);
