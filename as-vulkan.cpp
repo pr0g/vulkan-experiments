@@ -863,10 +863,6 @@ void as_vulkan_create_logical_device(AsVulkan* asVulkan)
         createInfo.enabledLayerCount = static_cast<uint32_t>(s_validationLayers.size());
         createInfo.ppEnabledLayerNames = s_validationLayers.data();
     }
-    else
-    {
-        createInfo.enabledLayerCount = 0;
-    }
 
     if (vkCreateDevice(asVulkan->physicalDevice, &createInfo, nullptr, &asVulkan->device) != VK_SUCCESS)
     {
