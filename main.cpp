@@ -396,5 +396,8 @@ int main(int argc, char** argv) {
   as_vulkan_cleanup(app.asVulkan);
   as_vulkan_destroy(&app.asVulkan);
 
+  SDL_DestroyWindow(window);
+  SDL_Quit();
+
   return 0;
 }
