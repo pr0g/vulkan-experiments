@@ -2307,12 +2307,12 @@ void as_vulkan_create_image(
     vkBindImageMemory(asVulkan->device, image, imageMemory, 0);
 }
 
-void as_vulkan_create_as_image(AsVulkan* asVulkan, AsVulkanImage* asImage, const char* path)
+void as_vulkan_create_as_image(
+    AsVulkan* asVulkan, AsVulkanImage* asImage, const char* path)
 {
     int width, height, channels;
     stbi_uc* pixels = stbi_load(
-        path, &width, &height,
-        &channels, STBI_rgb_alpha);
+        path, &width, &height, &channels, STBI_rgb_alpha);
 
     if (pixels == nullptr)
     {
