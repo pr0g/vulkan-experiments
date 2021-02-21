@@ -646,9 +646,10 @@ VkResult as_vulkan_destroy_debug_utils_messenger_ext(
     }
 }
 
-void as_vulkan_debug(AsVulkan* asVulkan)
+static void populate_debug_messenger_create_info(
+    VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
-    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity =
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
@@ -660,6 +661,12 @@ void as_vulkan_debug(AsVulkan* asVulkan)
         | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = as_vulkan_debug_callback;
     createInfo.pUserData = nullptr;
+}
+
+void as_vulkan_debug(AsVulkan* asVulkan)
+{
+    VkDebugUtilsMessengerCreateInfoEXT createInfo;
+    populate_debug_messenger_create_info(createInfo);
 
     if (as_vulkan_create_debug_utils_messenger_ext(
         asVulkan->instance, &createInfo, nullptr, &asVulkan->debugMessenger) != VK_SUCCESS)
@@ -2097,16 +2104,21 @@ void as_vulkan_create_instance(
         instance_extensions, instance_extensions + instance_extension_count);
 
     VkInstanceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo = &appInfo;
+
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
     if (s_enableValidationLayers)
     {
         enabledExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
         createInfo.enabledLayerCount = static_cast<uint32_t>(s_validationLayers.size());
         createInfo.ppEnabledLayerNames = s_validationLayers.data();
+
+        populate_debug_messenger_create_info(debugCreateInfo);
+        createInfo.pNext = &debugCreateInfo;
     }
 
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
     createInfo.ppEnabledExtensionNames = enabledExtensions.data();
     createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
 
