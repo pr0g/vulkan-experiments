@@ -31,7 +31,8 @@ static const std::vector<const char*> s_validationLayers = {
 };
 
 static const std::vector<const char*> s_deviceExtensions = {
-  VK_KHR_SWAPCHAIN_EXTENSION_NAME
+  VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+  "VK_KHR_portability_subset"
 };
 
 static const bool s_enableValidationLayers =
@@ -76,6 +77,7 @@ struct AsVulkanImage
     VkImage image;
     VkImageView imageView;
     VkDeviceMemory imageMemory;
+    uint32_t mipLevels;
 };
 
 struct AsVulkanQueue
@@ -453,12 +455,12 @@ VkSurfaceFormatKHR as_vulkan_choose_swap_surface_format(const std::vector<VkSurf
 {
     if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED)
     {
-        return { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+        return { VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
     }
 
     auto it = std::find_if(availableFormats.begin(), availableFormats.end(), [](const auto& availableFormat)
     {
-        return availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+        return availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     });
 
     if (it != availableFormats.end())
@@ -935,7 +937,8 @@ void as_vulkan_recreate_swap_chain(AsVulkan* asVulkan)
 }
 
 VkImageView as_vulkan_create_image_view(
-    AsVulkan* asVulkan, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
+    AsVulkan* asVulkan, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags,
+    const uint32_t mipLevels)
 {
     VkImageViewCreateInfo imageViewCreateInfo{};
     imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -948,7 +951,7 @@ VkImageView as_vulkan_create_image_view(
     imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
     imageViewCreateInfo.subresourceRange.aspectMask = aspectFlags;
     imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-    imageViewCreateInfo.subresourceRange.levelCount = 1;
+    imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
     imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
     imageViewCreateInfo.subresourceRange.layerCount = 1;
 
@@ -968,7 +971,8 @@ void as_vulkan_create_image_views(AsVulkan* asVulkan)
     for (size_t i = 0; i < asVulkan->swapChainImages.size(); ++i)
     {
         asVulkan->swapChainImageViews[i] = as_vulkan_create_image_view(
-            asVulkan, asVulkan->swapChainImages[i], asVulkan->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+            asVulkan, asVulkan->swapChainImages[i],
+            asVulkan->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
     }
 }
 
@@ -1446,7 +1450,7 @@ void as_vulkan_end_single_time_commands(AsVulkan* asVulkan, VkCommandBuffer comm
 
 void as_vulkan_transition_image_layout(
     AsVulkan* asVulkan, VkImage image, VkFormat format,
-    VkImageLayout oldLayout, VkImageLayout newLayout)
+    VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
 {
     VkCommandBuffer commandBuffer = as_vulkan_begin_single_time_commands(asVulkan);
 
@@ -1458,7 +1462,7 @@ void as_vulkan_transition_image_layout(
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
@@ -1951,20 +1955,11 @@ void as_vulkan_update_uniform_buffer(
 
         for (size_t i = 0; i < uniform.meshInstanceHandles.size(); ++i)
         {
-            // PI / (number_of_meshes_of_type * number_of_types * spawn_delay)
-            // PI / (20 * 3 * 0.03) == PI / 1.8 == 1.7453292519
-            float y = std::sin(
-                asVulkan->meshInstances[uniform.meshInstanceHandles[i]].time
-                * 1.047197551196f);
-            const as::mat4 t = as::mat4_from_mat3(as::mat3_scale(y));
-
-            asVulkan->meshInstances[uniform.meshInstanceHandles[i]].time += deltaTime;
-
-            as::mat4 transform =
+            const as::mat4 model =
               asVulkan->meshInstances[uniform.meshInstanceHandles[i]].transform;
 
             UniformBufferObject ubo;
-            ubo.mvp = proj * view * transform * t * asVulkan->meshInstances[uniform.meshInstanceHandles[i]].rot;
+            ubo.mvp = proj * view * model;
 
             memcpy(&uniformData[i * uniformAlignment], &ubo, sizeof(UniformBufferObject));
         }
@@ -2263,9 +2258,9 @@ void sdl_vulkan_instance_extensions(
 #endif // AS_VULKAN_SDL
 
 void as_vulkan_create_image(
-    AsVulkan* asVulkan, uint32_t width, uint32_t height, VkFormat format,
-    VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-    VkImage& image, VkDeviceMemory& imageMemory)
+    AsVulkan* asVulkan, uint32_t width, uint32_t height, uint32_t mipLevels,
+    VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -2273,7 +2268,7 @@ void as_vulkan_create_image(
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
+    imageInfo.mipLevels = mipLevels;
     imageInfo.arrayLayers = 1;
     imageInfo.format = format;
     imageInfo.tiling = tiling;
@@ -2307,6 +2302,99 @@ void as_vulkan_create_image(
     vkBindImageMemory(asVulkan->device, image, imageMemory, 0);
 }
 
+void as_vulkan_generate_mipmaps(
+    AsVulkan* asVulkan, const VkImage image, const VkFormat imageFormat,
+    const int32_t width, const int32_t height, const uint32_t mipLevels)
+{
+    VkFormatProperties formatProperties;
+    vkGetPhysicalDeviceFormatProperties(
+        asVulkan->physicalDevice, imageFormat, &formatProperties);
+
+    if ((formatProperties.optimalTilingFeatures
+            & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) == 0)
+    {
+        std::cerr << "texture image format does not support linear blitting\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+    VkCommandBuffer commandBuffer = as_vulkan_begin_single_time_commands(asVulkan);
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.image = image;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.levelCount = 1;
+
+    int32_t mipWidth = width;
+    int32_t mipHeight = height;
+
+    for (uint64_t i = 1; i < mipLevels; ++i) {
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+        vkCmdPipelineBarrier(
+            commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+            &barrier);
+        
+        VkImageBlit blit{};
+        blit.srcOffsets[0] = { 0, 0, 0 };
+        blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.srcSubresource.mipLevel = i - 1; // source mip level
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount = 1;
+        blit.dstOffsets[0] = { 0, 0, 0 };
+        blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.dstSubresource.mipLevel = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount = 1;
+
+        vkCmdBlitImage(
+            commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+        
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        vkCmdPipelineBarrier(
+            commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
+            &barrier);
+
+        if (mipWidth > 1) {
+            mipWidth /= 2;
+        }
+        if (mipHeight > 1) {
+            mipHeight /= 2;
+        }
+    }
+
+    // handle last mip level
+    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, 
+        &barrier);
+
+    as_vulkan_end_single_time_commands(asVulkan, commandBuffer);
+}
+
 void as_vulkan_create_as_image(
     AsVulkan* asVulkan, AsVulkanImage* asImage, const char* path)
 {
@@ -2319,6 +2407,9 @@ void as_vulkan_create_as_image(
         std::cerr << "failed to load texture image\n";
         std::exit(EXIT_FAILURE);
     }
+
+    const uint32_t mipLevels = static_cast<uint32_t>(
+        std::floor(std::log2(std::max(width, height)))) + 1;
 
     VkDeviceSize imageSize = static_cast<VkDeviceSize>(width * height * 4);
 
@@ -2337,30 +2428,28 @@ void as_vulkan_create_as_image(
     stbi_image_free(pixels);
 
     as_vulkan_create_image(
-        asVulkan, width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        asImage->image, asImage->imageMemory);
+        asVulkan, width, height, mipLevels, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, asImage->image, asImage->imageMemory);
 
     as_vulkan_transition_image_layout(
-        asVulkan, asImage->image, VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        asVulkan, asImage->image, VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        mipLevels);
 
     as_vulkan_copy_buffer_to_image(
         asVulkan, stagingBuffer, asImage->image,
         static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
-    // prepare for shader accesss
-    as_vulkan_transition_image_layout(
-        asVulkan, asImage->image, VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
     vkDestroyBuffer(asVulkan->device, stagingBuffer, nullptr);
     vkFreeMemory(asVulkan->device, stagingBufferMemory, nullptr);
 
+    as_vulkan_generate_mipmaps(
+        asVulkan, asImage->image, VK_FORMAT_R8G8B8A8_SRGB, width, height,
+        mipLevels);
+
     asImage->imageView = as_vulkan_create_image_view(
-        asVulkan, asImage->image,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_ASPECT_COLOR_BIT);
+        asVulkan, asImage->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 }
 
 void as_vulkan_create_image_sampler(AsVulkan* asVulkan)
@@ -2380,8 +2469,8 @@ void as_vulkan_create_image_sampler(AsVulkan* asVulkan)
     samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
     samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerInfo.mipLodBias = 0.0f;
-    samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = 0.0f;
+    samplerInfo.minLod = 0;
+    samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
 
     if (vkCreateSampler(asVulkan->device, &samplerInfo, nullptr, &asVulkan->imageSampler) != VK_SUCCESS)
     {
@@ -2395,13 +2484,15 @@ void as_vulkan_create_depth_resources(AsVulkan* asVulkan)
     VkFormat depthFormat = as_vulkan_find_depth_format(asVulkan);
     as_vulkan_create_image(
         asVulkan,
-        asVulkan->swapChainExtent.width, asVulkan->swapChainExtent.height,
+        asVulkan->swapChainExtent.width, asVulkan->swapChainExtent.height, 1,
         depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, asVulkan->depth.image, asVulkan->depth.imageMemory);
 
-    asVulkan->depth.imageView = as_vulkan_create_image_view(asVulkan, asVulkan->depth.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    asVulkan->depth.imageView = as_vulkan_create_image_view(
+        asVulkan, asVulkan->depth.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-    as_vulkan_transition_image_layout(asVulkan, asVulkan->depth.image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    as_vulkan_transition_image_layout(
+        asVulkan, asVulkan->depth.image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 }
 
 void as_vulkan_create_mesh_data_vector(
