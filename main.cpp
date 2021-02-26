@@ -140,6 +140,7 @@ int main(int argc, char** argv) {
   as_vulkan_create_descriptor_set_layout(asVulkan);
   as_vulkan_create_graphics_pipeline(asVulkan);
   as_vulkan_create_rendering_resources(asVulkan);
+  as_vulkan_create_color_resources(asVulkan);
   as_vulkan_create_depth_resources(asVulkan);
   as_vulkan_create_image_sampler(asVulkan);
   as_vulkan_create_descriptor_pool(asVulkan);

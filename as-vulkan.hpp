@@ -36,6 +36,7 @@ void as_vulkan_create_render_pass(AsVulkan* asVulkan);
 void as_vulkan_create_descriptor_set_layout(AsVulkan* asVulkan);
 void as_vulkan_create_graphics_pipeline(AsVulkan* asVulkan);
 void as_vulkan_create_rendering_resources(AsVulkan* asVulkan);
+void as_vulkan_create_color_resources(AsVulkan* asVulkan);
 void as_vulkan_create_depth_resources(AsVulkan* asVulkan);
 void as_vulkan_create_vertex_buffer(AsVulkan* asVulkan, AsVulkanMesh* vulkanMesh, const AsMesh* mesh);
 void as_vulkan_create_index_buffer(AsVulkan* asVulkan, AsVulkanMesh* vulkanMesh, const AsMesh* mesh);
