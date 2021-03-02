@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
   as_create_mesh(&viking_mesh);
   as_load_mesh(viking_mesh, "assets/models/viking_room.obj");
 
-  size_t viking_texture_handle = as_vulkan_allocate_image(asVulkan);
+  thh::handle_t viking_texture_handle = as_vulkan_allocate_image(asVulkan);
   as_vulkan_create_as_image(
     asVulkan, as_vulkan_image(asVulkan, viking_texture_handle),
     "assets/models/viking_room.png");
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
   as_vulkan_create_index_buffer(
     asVulkan, as_vulkan_mesh(asVulkan, viking_mesh_handle), viking_mesh);
 
-  size_t viking_uniform_handle = as_vulkan_allocate_uniform(asVulkan);
+  thh::handle_t viking_uniform_handle = as_vulkan_allocate_uniform(asVulkan);
   as_vulkan_create_uniform_buffer(
     asVulkan, as_vulkan_uniform(asVulkan, viking_uniform_handle), 1);
   as_vulkan_create_descriptor_set(

@@ -93,7 +93,7 @@ struct AsMeshInstance
     float time;
 
     thh::handle_t meshHandle; // actual mesh the instance is referring to
-    size_t uniformHandle; // uniform buffer being used for this mesh instance
+    thh::handle_t uniformHandle; // uniform buffer being used for this mesh instance
     size_t uniformIndex; // which instance in the uniform block is this one (id)
 };
 
@@ -148,8 +148,8 @@ struct AsVulkan
 
     // app data
     thh::container_t<AsVulkanMesh> meshes;
-    std::vector<AsVulkanImage> images;
-    std::vector<AsVulkanUniform> uniforms;
+    thh::container_t<AsVulkanImage> images;
+    thh::container_t<AsVulkanUniform> uniforms;
     thh::container_t<AsMeshInstance> meshInstances;
 
     AsVulkanAlignment alignment;
@@ -536,14 +536,14 @@ AsVulkanMesh* as_vulkan_mesh(AsVulkan* asVulkan, thh::handle_t handle)
     return asVulkan->meshes.resolve(handle);
 }
 
-AsVulkanImage* as_vulkan_image(AsVulkan* asVulkan, size_t handle)
+AsVulkanImage* as_vulkan_image(AsVulkan* asVulkan, thh::handle_t handle)
 {
-    return &asVulkan->images[handle];
+    return asVulkan->images.resolve(handle);
 }
 
-AsVulkanUniform* as_vulkan_uniform(AsVulkan* asVulkan, size_t handle)
+AsVulkanUniform* as_vulkan_uniform(AsVulkan* asVulkan, thh::handle_t handle)
 {
-    return &asVulkan->uniforms[handle];
+    return asVulkan->uniforms.resolve(handle);
 }
 
 thh::handle_t as_vulkan_allocate_mesh_instance(AsVulkan* asVulkan)
@@ -561,10 +561,9 @@ void as_create_mesh(AsMesh** asMesh)
     *asMesh = new AsMesh;
 }
 
-size_t as_vulkan_allocate_image(AsVulkan* asVulkan)
+thh::handle_t as_vulkan_allocate_image(AsVulkan* asVulkan)
 {
-    asVulkan->images.emplace_back();
-    return asVulkan->images.size() - 1;
+    return asVulkan->images.add();
 }
 
 thh::handle_t as_vulkan_allocate_mesh(AsVulkan* asVulkan)
@@ -572,10 +571,9 @@ thh::handle_t as_vulkan_allocate_mesh(AsVulkan* asVulkan)
     return asVulkan->meshes.add();
 }
 
-size_t as_vulkan_allocate_uniform(AsVulkan* asVulkan)
+thh::handle_t as_vulkan_allocate_uniform(AsVulkan* asVulkan)
 {
-    asVulkan->uniforms.emplace_back();
-    return asVulkan->uniforms.size() - 1;
+    return asVulkan->uniforms.add();
 }
 
 void as_mesh_instance_transform(AsMeshInstance* asMesh, const as::mat4& transform)
@@ -593,8 +591,7 @@ void as_mesh_instance_percent(AsMeshInstance* meshInstance, float percent)
     meshInstance->percent = percent;
 }
 
-void as_mesh_instance_time(
-    AsMeshInstance* meshInstance, float time)
+void as_mesh_instance_time(AsMeshInstance* meshInstance, float time)
 {
     meshInstance->time = time;
 }
@@ -604,7 +601,7 @@ void as_mesh_instance_mesh(AsMeshInstance* meshInstance, thh::handle_t meshHandl
     meshInstance->meshHandle = meshHandle;
 }
 
-void as_mesh_instance_uniform(AsMeshInstance* meshInstance, size_t uniformHandle)
+void as_mesh_instance_uniform(AsMeshInstance* meshInstance, thh::handle_t uniformHandle)
 {
     meshInstance->uniformHandle = uniformHandle;
 }
@@ -1930,7 +1927,7 @@ void as_vulkan_prepare_frame(
         uint32_t dynamicOffset = static_cast<uint32_t>(meshInstance.uniformIndex * uniformAlignment);
 
         const AsVulkanMesh& mesh = *asVulkan->meshes.resolve(meshInstance.meshHandle);
-        const AsVulkanUniform& uniform = asVulkan->uniforms[meshInstance.uniformHandle];
+        const AsVulkanUniform& uniform = *asVulkan->uniforms.resolve(meshInstance.uniformHandle);
 
         VkBuffer vertexBuffers[] = { mesh.vertexBuffer };
         VkDeviceSize offsets[] = { 0 };
@@ -1981,11 +1978,10 @@ void as_vulkan_prepare_frame(
 void as_vulkan_update_uniform_buffer(
     AsVulkan* asVulkan, const as::mat4& view, float deltaTime)
 {
-    for (AsVulkanUniform& uniform : asVulkan->uniforms)
-    {
+    asVulkan->uniforms.enumerate([asVulkan, &view, deltaTime](auto& uniform) {
         if (uniform.meshInstanceHandles.empty())
         {
-            continue;
+            return;
         }
 
         VkDeviceSize uniformAlignment = as_vulkan_uniform_alignment<UniformBufferObject>(asVulkan->alignment);
@@ -2030,7 +2026,7 @@ void as_vulkan_update_uniform_buffer(
 
         vkUnmapMemory(
             asVulkan->device, uniform.uniformBufferMemory);
-    }
+    });
 }
 
 void as_vulkan_draw_frame(AsVulkan* asVulkan)
@@ -2237,22 +2233,20 @@ void as_vulkan_cleanup(AsVulkan* asVulkan)
 
     vkDestroySampler(asVulkan->device, asVulkan->imageSampler, nullptr);
 
-    for (AsVulkanImage& image : asVulkan->images)
-    {
+    asVulkan->images.enumerate([asVulkan](auto& image) {
         vkDestroyImageView(asVulkan->device, image.imageView, nullptr);
         vkDestroyImage(asVulkan->device, image.image, nullptr);
         vkFreeMemory(asVulkan->device, image.imageMemory, nullptr);
-    }
+    });
 
     vkDestroyDescriptorPool(asVulkan->device, asVulkan->descriptorPool, nullptr);
 
     vkDestroyDescriptorSetLayout(asVulkan->device, asVulkan->descriptorSetLayout, nullptr);
 
-    for (AsVulkanUniform& uniform : asVulkan->uniforms)
-    {
+    asVulkan->uniforms.enumerate([asVulkan](auto& uniform) {
         vkDestroyBuffer(asVulkan->device, uniform.uniformBuffer, nullptr);
         vkFreeMemory(asVulkan->device, uniform.uniformBufferMemory, nullptr);
-    }
+    });
 
     asVulkan->meshes.enumerate([asVulkan](AsVulkanMesh& mesh) {
         vkDestroyBuffer(asVulkan->device, mesh.vertexBuffer, nullptr);
