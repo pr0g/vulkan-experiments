@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "as/as-mat4.hpp"
+#include "thh_handles/thh_handles.hpp"
 
 struct AsVulkan;
 struct AsVulkanMesh;
@@ -51,26 +52,26 @@ void as_vulkan_cleanup(AsVulkan* asVulkan);
 
 void as_vulkan_create_as_image(AsVulkan* asVulkan, AsVulkanImage* asImage, const char* path);
 
-AsVulkanMesh* as_vulkan_mesh(AsVulkan* asVulkan, size_t handle);
+AsVulkanMesh* as_vulkan_mesh(AsVulkan* asVulkan, thh::handle_t handle);
 AsVulkanImage* as_vulkan_image(AsVulkan* asVulkan, size_t handle);
 AsVulkanUniform* as_vulkan_uniform(AsVulkan* asVulkan, size_t handle);
-AsMeshInstance* as_vulkan_mesh_instance(AsVulkan* asVulkan, size_t handle);
+AsMeshInstance* as_vulkan_mesh_instance(AsVulkan* asVulkan, thh::handle_t handle);
 
-size_t as_vulkan_allocate_mesh(AsVulkan* asVulkan);
+thh::handle_t as_vulkan_allocate_mesh(AsVulkan* asVulkan);
+thh::handle_t as_vulkan_allocate_mesh_instance(AsVulkan* asVulkan);
 size_t as_vulkan_allocate_image(AsVulkan* asVulkan);
 size_t as_vulkan_allocate_uniform(AsVulkan* asVulkan);
-size_t as_vulkan_allocate_mesh_instance(AsVulkan* asVulkan);
 
 void as_create_mesh(AsMesh** asMesh);
 void as_load_mesh(AsMesh* mesh, const char* path);
 
-void as_mesh_instance_mesh(AsMeshInstance* meshInstance, size_t meshHandle);
+void as_mesh_instance_mesh(AsMeshInstance* meshInstance, thh::handle_t meshHandle);
 void as_mesh_instance_uniform(AsMeshInstance* meshInstance, size_t uniformHandle);
-void as_mesh_instance_index(AsMeshInstance* meshInstance, size_t instanceIndex);
+void as_mesh_instance_index(AsMeshInstance* meshInstance, size_t uniformIndex);
 
 void as_mesh_instance_transform(AsMeshInstance* meshInstance, const as::mat4& transform);
 void as_mesh_instance_rot(AsMeshInstance* meshInstance, const as::mat4& rot);
 void as_mesh_instance_percent(AsMeshInstance* meshInstance, float offset);
 void as_mesh_instance_time(AsMeshInstance* meshInstance, float time);
 
-size_t as_uniform_add_mesh_instance(AsVulkanUniform* asUniform, size_t handle);
+size_t as_uniform_add_mesh_instance(AsVulkanUniform* asUniform, thh::handle_t handle);

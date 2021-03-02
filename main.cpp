@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
     asVulkan, as_vulkan_image(asVulkan, viking_texture_handle),
     "assets/models/viking_room.png");
 
-  size_t viking_mesh_handle = as_vulkan_allocate_mesh(asVulkan);
+  thh::handle_t viking_mesh_handle = as_vulkan_allocate_mesh(asVulkan);
   as_vulkan_create_vertex_buffer(
     asVulkan, as_vulkan_mesh(asVulkan, viking_mesh_handle), viking_mesh);
   as_vulkan_create_index_buffer(
@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
     asVulkan, as_vulkan_uniform(asVulkan, viking_uniform_handle),
     as_vulkan_image(asVulkan, viking_texture_handle));
 
-  size_t viking_mesh_instance_handle = as_vulkan_allocate_mesh_instance(asVulkan);
+  thh::handle_t viking_mesh_instance_handle = as_vulkan_allocate_mesh_instance(asVulkan);
   size_t viking_mesh_instance_index = as_uniform_add_mesh_instance(
     as_vulkan_uniform(asVulkan, viking_uniform_handle), viking_mesh_instance_handle);
 
