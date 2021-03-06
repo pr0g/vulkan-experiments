@@ -19,7 +19,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   thh_handles
   GIT_REPOSITORY https://github.com/pr0g/cpp-handle-container.git
-  GIT_TAG        8c30500bd53b75cc88e4a5e71083a506c45b63c8)
+  GIT_TAG        7f6c9a3d8c074bed6db9d37cc7a03bb03bed589b)
 FetchContent_MakeAvailable(as-camera-input stb thh_handles)
 
 add_executable(${PROJECT_NAME} main.cpp as-vulkan.cpp)
