@@ -12,7 +12,7 @@ It's very much a WIP and is not ready for use other than as a learning tool.
 
 ### Earlier work
 
-- [Updating Models (Apples, Pears, Bananas)](Uhttps://twitter.com/tom_h_h/status/980474346434162688?s=20) (Command Buffer generation)
+- [Updating Models (Apples, Pears, Bananas)](https://twitter.com/tom_h_h/status/980474346434162688?s=20) (Command Buffer generation)
 - [Varying Models (Apples, Pears, Bananas)](https://twitter.com/tom_h_h/status/957656446258307073?s=20)
 - [Instanced Models (Apples)](https://twitter.com/tom_h_h/status/955035033923932161?s=20)
 - [Multiple Models (Bananas)](https://twitter.com/tom_h_h/status/952264079737085952?s=20)
