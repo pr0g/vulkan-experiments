@@ -1,7 +1,7 @@
 #include "as-vulkan.hpp"
 
-#include "as/as-math-ops.hpp"
 #include "as-camera-input/as-camera-input.hpp"
+#include "as/as-math-ops.hpp"
 
 #include "SDL.h"
 #include "SDL_syswm.h"
@@ -10,11 +10,11 @@
 
 namespace asc
 {
-  Handedness handedness()
-  {
-    return Handedness::Right;
-  }
+Handedness handedness()
+{
+  return Handedness::Right;
 }
+} // namespace asc
 
 asci::MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
 {
@@ -95,7 +95,8 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
     return 1;
@@ -122,7 +123,7 @@ int main(int argc, char** argv) {
   AsVulkan* asVulkan = nullptr;
   as_vulkan_create(&asVulkan);
   const char** instance_extensions;
-	uint32_t instance_extensions_count = 0;
+  uint32_t instance_extensions_count = 0;
   sdl_vulkan_instance_extensions(
     window, instance_extensions, instance_extensions_count);
   as_vulkan_create_instance(
@@ -167,17 +168,18 @@ int main(int argc, char** argv) {
     asVulkan, as_vulkan_uniform(asVulkan, viking_uniform_handle),
     as_vulkan_image(asVulkan, viking_texture_handle));
 
-  thh::handle_t viking_mesh_instance_handle = as_vulkan_allocate_mesh_instance(asVulkan);
+  thh::handle_t viking_mesh_instance_handle =
+    as_vulkan_allocate_mesh_instance(asVulkan);
   size_t viking_mesh_instance_index = as_uniform_add_mesh_instance(
-    as_vulkan_uniform(asVulkan, viking_uniform_handle), viking_mesh_instance_handle);
+    as_vulkan_uniform(asVulkan, viking_uniform_handle),
+    viking_mesh_instance_handle);
 
-  using fp_seconds =
-    std::chrono::duration<float, std::chrono::seconds::period>;
+  using fp_seconds = std::chrono::duration<float, std::chrono::seconds::period>;
 
   asci::SmoothProps smooth_props{};
   asc::Camera camera{};
   // initial camera position and orientation
-  camera.look_at = as::vec3(2.0f, 2.0f, 2.0f);
+  camera.pivot = as::vec3(2.0f, 2.0f, 2.0f);
   camera.pitch = as::radians(32.0f);
   camera.yaw = as::radians(-45.0f);
 
@@ -185,9 +187,10 @@ int main(int argc, char** argv) {
 
   auto first_person_rotate_camera =
     asci::RotateCameraInput{asci::MouseButton::Right};
-  auto first_person_pan_camera = asci::PanCameraInput{asci::lookPan};
+  auto first_person_pan_camera = asci::PanCameraInput{
+    asci::MouseButton::Middle, asci::lookPan, asci::translatePivot};
   auto first_person_translate_camera =
-    asci::TranslateCameraInput{asci::lookTranslation};
+    asci::TranslateCameraInput{asci::lookTranslation, asci::translatePivot};
   auto first_person_wheel_camera = asci::ScrollTranslationCameraInput{};
 
   asci::Cameras cameras;

@@ -11,7 +11,7 @@ include(FetchContent)
 FetchContent_Declare(
   as-camera-input
   GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
-  GIT_TAG        777d7895874115bb81933f8e117414bf8efc9d29)
+  GIT_TAG        a779bd361b2351940bf07e70d130530dfe293d27)
 FetchContent_Declare(
   stb
   GIT_REPOSITORY https://github.com/pr0g/stb.git
