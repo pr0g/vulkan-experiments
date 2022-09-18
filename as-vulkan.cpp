@@ -2375,7 +2375,7 @@ void as_vulkan_generate_mipmaps(
             commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1,
             &barrier);
-        
+
         VkImageBlit blit{};
         blit.srcOffsets[0] = { 0, 0, 0 };
         blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
@@ -2393,7 +2393,7 @@ void as_vulkan_generate_mipmaps(
         vkCmdBlitImage(
             commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-        
+
         barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -2421,7 +2421,7 @@ void as_vulkan_generate_mipmaps(
 
     vkCmdPipelineBarrier(
         commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, 
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1,
         &barrier);
 
     as_vulkan_end_single_time_commands(asVulkan, commandBuffer);
@@ -2522,7 +2522,7 @@ void as_vulkan_create_color_resources(AsVulkan* asVulkan)
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, asVulkan->color.image,
         asVulkan->color.imageMemory);
-    
+
     asVulkan->color.imageView = as_vulkan_create_image_view(
         asVulkan, asVulkan->color.image, colorFormat,
         VK_IMAGE_ASPECT_COLOR_BIT, 1);
@@ -2530,7 +2530,7 @@ void as_vulkan_create_color_resources(AsVulkan* asVulkan)
 
 void as_vulkan_create_depth_resources(AsVulkan* asVulkan)
 {
-    VkFormat depthFormat = as_vulkan_find_depth_format(asVulkan);
+    const VkFormat depthFormat = as_vulkan_find_depth_format(asVulkan);
     as_vulkan_create_image(
         asVulkan, asVulkan->swapChainExtent.width,
         asVulkan->swapChainExtent.height, 1, asVulkan->msaaSamples, depthFormat,
