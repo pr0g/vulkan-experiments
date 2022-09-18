@@ -2185,6 +2185,7 @@ void as_vulkan_create_instance(
 
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     createInfo.pApplicationInfo = &appInfo;
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
@@ -2198,6 +2199,8 @@ void as_vulkan_create_instance(
         populate_debug_messenger_create_info(debugCreateInfo);
         createInfo.pNext = &debugCreateInfo;
     }
+
+    enabledExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
     createInfo.ppEnabledExtensionNames = enabledExtensions.data();
     createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
