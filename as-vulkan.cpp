@@ -713,12 +713,6 @@ bool as_vulkan_check_physical_device_properties(
         return false;
     }
 
-    if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-    {
-        std::cerr << "Vulkan physical device is not a discrete GPU\n";
-        return false;
-    }
-
     if (!as_vulkan_check_device_extension_support(device))
     {
         std::cerr << "Vulkan physical device does not support required extensions\n";
