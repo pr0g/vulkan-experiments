@@ -9,6 +9,10 @@ find_package(tinyobjloader REQUIRED CONFIG)
 include(FetchContent)
 
 FetchContent_Declare(
+  as
+  GIT_REPOSITORY https://github.com/pr0g/as.git
+  GIT_TAG 4bd7768323edfc7d819874439d40ce21a3ea6388)
+FetchContent_Declare(
   as-camera-input
   GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
   GIT_TAG        a779bd361b2351940bf07e70d130530dfe293d27)
