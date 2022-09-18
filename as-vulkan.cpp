@@ -316,10 +316,9 @@ bool as_vulkan_has_stencil_component(VkFormat format)
 
 VkFormat as_vulkan_find_depth_format(AsVulkan* asVulkan)
 {
+    // note: for reverse z, we must use a floating point depth buffer (VK_FORMAT_D32_SFLOAT)
     return as_vulkan_find_supported_format(
-        asVulkan,
-        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-        VK_IMAGE_TILING_OPTIMAL,
+        asVulkan, {VK_FORMAT_D32_SFLOAT}, VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
@@ -1075,8 +1074,9 @@ void as_vulkan_create_graphics_pipeline(AsVulkan* asVulkan)
     viewport.y = 0.0f;
     viewport.width = static_cast<float>(asVulkan->swapChainExtent.width);
     viewport.height = static_cast<float>(asVulkan->swapChainExtent.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    // reverse z
+    viewport.minDepth = 1.0f;
+    viewport.maxDepth = 0.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
@@ -1121,7 +1121,7 @@ void as_vulkan_create_graphics_pipeline(AsVulkan* asVulkan)
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depthStencil.depthTestEnable = VK_TRUE;
     depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_GREATER; // reverse z
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f;
     depthStencil.maxDepthBounds = 1.0f;
@@ -1880,7 +1880,7 @@ void as_vulkan_prepare_frame(
 
     VkClearValue clearValues[2]{};
     clearValues[0].color = { { 0.392f, 0.584f, 0.929f, 1.0f } };
-    clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[1].depthStencil = { 0.0f, 0 }; // reverse z
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1980,10 +1980,10 @@ void as_vulkan_update_uniform_buffer(
             uniformAlignment * uniform.meshInstanceHandles.size(),
             0, reinterpret_cast<void**>(&uniformData));
 
-        as::mat4 proj = as::perspective_vulkan_rh(
+        as::mat4 proj = as::reverse_z(as::perspective_vulkan_rh(
             as::radians(45.0f),
             asVulkan->swapChainExtent.width / static_cast<float>(asVulkan->swapChainExtent.height),
-            0.1f, 100.0f);
+            0.1f, 100.0f));
 
         for (size_t i = 0; i < uniform.meshInstanceHandles.size(); ++i)
         {
