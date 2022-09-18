@@ -164,18 +164,12 @@ struct UniformBufferObject
 template<typename T>
 VkDeviceSize as_vulkan_uniform_alignment(AsVulkanAlignment alignment)
 {
-    size_t sizeBytes = sizeof(T);
-    if (sizeBytes <= alignment.minUniformBufferAlignment)
-    {
-        return alignment.minUniformBufferAlignment;
+    size_t minUboAlignment = alignment.minUniformBufferAlignment;
+    size_t alignedSize = sizeof(T);
+    if (minUboAlignment > 0) {
+        alignedSize = (alignedSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
     }
-    else
-    {
-        VkDeviceSize alignOffset = (sizeBytes / alignment.minUniformBufferAlignment) +
-            (((sizeBytes % alignment.minUniformBufferAlignment) > 0) ? 1 : 0);
-
-        return alignment.minUniformBufferAlignment * alignOffset;
-    }
+    return alignedSize;
 }
 
 void as_vulkan_create_descriptor_set_layout(AsVulkan* asVulkan)
